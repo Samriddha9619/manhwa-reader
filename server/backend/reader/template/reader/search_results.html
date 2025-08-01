@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Results - Comic Reader{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Search Results</h1>
+    {% if query %}
+        <p class="text-muted">Results for: "<strong>{{ query }}</strong>"</p>
+    {% endif %}
+</div>
+
+<div class="row">
+    {% for comic in comics %}
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="card comic-card">
+                {% if comic.thumbnail %}
+                    <img src="{{ comic.thumbnail.url }}" class="card-img-top comic-thumbnail" alt="{{ comic.title }}">
+                {% else %}
+                    <div class="card-img-top comic-thumbnail bg-light d-flex align-items-center justify-content-center">
+                        <span class="text-muted">No Image</span>
+                    </div>
+                {% endif %}
+                
+                <div class="card-body">
+                    <h5 class="card-title">{{ comic.title }}</h5>
+                    <p class="card-text text-muted small">{{ comic.description|truncatewords:15 }}</p>
+                    <a href="{% url 'comics:comic_detail' comic.slug %}" class="btn btn-primary btn-sm">Read Now</a>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <div class="alert alert-warning text-center">
+                {% if query %}
+                    No comics found for "{{ query }}". Try different keywords.
+                {% else %}
+                    Please enter a search term.
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+    <nav aria-label="Search results pagination">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">Previous</a>
+                </li>
+            {% endif %}
+            
+            <li class="page-item active">
+                <span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            </li>
+            
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}">Next</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}
+{% endblock %}

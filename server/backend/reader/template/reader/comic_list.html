@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Comics - Comic Reader{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Latest Comics</h1>
+    <div>
+        <a href="{% url 'comics:latest_comics' %}" class="btn btn-outline-primary me-2">Latest</a>
+        <a href="{% url 'comics:popular_comics' %}" class="btn btn-outline-success">Popular</a>
+    </div>
+</div>
+
+<div class="row" id="comics-grid">
+    {% for comic in comics %}
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="card comic-card">
+                {% if comic.thumbnail %}
+                    <img src="{{ comic.thumbnail.url }}" class="card-img-top comic-thumbnail" alt="{{ comic.title }}">
+                {% else %}
+                    <div class="card-img-top comic-thumbnail bg-light d-flex align-items-center justify-content-center">
+                        <span class="text-muted">No Image</span>
+                    </div>
+                {% endif %}
+                
+                <div class="card-body">
+                    <h5 class="card-title">{{ comic.title }}</h5>
+                    <p class="card-text text-muted small">{{ comic.description|truncatewords:15 }}</p>
+                    <p class="card-text">
+                        <small class="text-muted">By {{ comic.author|default:"Unknown" }}</small>
+                    </p>
+                    
+                    <!-- Categories -->
+                    <div class="mb-2">
+                        {% for category in comic.categories.all %}
+                            <span class="badge bg-secondary me-1">{{ category.name }}</span>
+                        {% endfor %}
+                    </div>
+                    
+                    <a href="{% url 'comics:comic_detail' comic.slug %}" class="btn btn-primary btn-sm">Read Now</a>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                No comics available at the moment.
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+    <nav aria-label="Comics pagination">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                </li>
+            {% endif %}
+            
+            <li class="page-item active">
+                <span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            </li>
+            
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}
+{% endblock %}

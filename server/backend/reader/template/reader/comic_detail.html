@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ comic.title }} - Comic Reader{% endblock %}
+
+{% block extra_css %}
+<style>
+.rating-stars {
+    color: #ffc107;
+}
+.rating-stars .empty {
+    color: #e9ecef;
+}
+.chapter-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+.comment-section {
+    max-height: 500px;
+    overflow-y: auto;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Comic Info -->
+    <div class="col-md-4">
+        <div class="card">
+            {% if comic.thumbnail %}
+                <img src="{{ comic.thumbnail.url }}" class="card-img-top" alt="{{ comic.title }}" style="height: 400px; object-fit: cover;">
+            {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 400px;">
+                    <span class="text-muted">No Image</span>
+                </div>
+            {% endif %}
+            
+            <div class="card-body">
+                <h3 class="card-title">{{ comic.title }}</h3>
+                <p class="text-muted mb-2">By {{ comic.author|default:"Unknown Author" }}</p>
+                
+                <!-- Rating Display -->
+                <div class="mb-3">
+                    <div class="rating-stars mb-1">
+                        {% if average_rating %}
+                            {% for i in "12345"|make_list %}
+                                {% if forloop.counter <= average_rating|floatformat:0 %}
+                                    <i class="fas fa-star"></i>
+                                {% else %}
+                                    <i class="fas fa-star empty"></i>
+                                {% endif %}
+                            {% endfor %}
+                            <span class="ms-2">{{ average_rating|floatformat:1 }}/5</span>
+                        {% else %}
+                            <span class="text-muted">No ratings yet</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Categories -->
+                <div class="mb-3">
+                    {% for category in comic.categories.all %}
+                        <a href="{% url 'comics:category_detail' category.pk %}" class="badge bg-secondary text-decoration-none me-1">
+                            {{ category.name }}
+                        </a>
+                    {% endfor %}
+                </div>
+                
+                <!-- Action Buttons -->
+                {% if user.is_authenticated %}
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-danger" id="bookmark-btn" data-slug="{{ comic.slug }}">
+                            {% if is_bookmarked %}
+                                <i class="fas fa-heart"></i> Remove Bookmark
+                            {% else %}
+                                <i class="far fa-heart"></i> Add Bookmark
+                            {% endif %}
+                        </button>
+                        
+                        <!-- Rating Form -->
+                        <div class="card">
+                            <div class="card-header">Rate this Comic</div>
+                            <div class="card-body">
+                                <div class="rating-input text-center">
+                                    {% for i in "12345"|make_list %}
+                                        <i class="fas fa-star rating-star" data-rating="{{ forloop.counter }}" 
+                                           {% if user_rating and forloop.counter <= user_rating.rate %}style="color: #ffc107;"{% else %}style="color: #e9ecef;"{% endif %}></i>
+                                    {% endfor %}
+                                </div>
+                                <input type="hidden" id="current-rating" value="{% if user_rating %}{{ user_rating.rate }}{% else %}0{% endif %}">
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <a href="{% url 'login' %}">Login</a> to bookmark and rate this comic.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Comic Content -->
+    <div class="col-md-8">
+        <!-- Description -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Description</h4>
+            </div>
+            <div class="card-body">
+                <p>{{ comic.description|default:"No description available." }}</p>
+            </div>
+        </div>
+        
+        <!-- Chapters List -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4>Chapters ({{ chapters.count }})</h4>
+                <small class="text-muted">Click to read</small>
+            </div>
+            <div class="card-body chapter-list">
+                {% for chapter in chapters %}
+                    <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                        <div>
+                            <h6 class="mb-0">
+                                <a href="{% url 'comics:chapter_detail' comic.slug chapter.slug %}" class="text-decoration-none">
+                                    Chapter {{ chapter.chapter_num }}
+                                    {% if chapter.title and chapter.title != "None" %}
+                                        - {{ chapter.title }}
+                                    {% endif %}
+                                </a>
+                            </h6>
+                            <small class="text-muted">{{ chapter.created_date|date:"M d, Y" }}</small>
+                        </div>
+                        <div class="text-end">
+                            {% if chapter.price > 0 %}
+                                <span class="badge bg-warning">{{ chapter.price }} coins</span>
+                            {% else %}
+                                <span class="badge bg-success">Free</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="text-center text-muted py-4">
+                        No chapters available yet.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Comments Section -->
+        <div class="card">
+            <div class="card-header">
+                <h4>Comments ({{ comments.count }})</h4>
+            </div>
+            <div class="card-body">
+                <!-- Add Comment Form -->
+                {% if user.is_authenticated %}
+                    <form id="comment-form" class="mb-4">
+                        <div class="mb-3">
+                            <textarea class="form-control" id="comment-content" rows="3" placeholder="Write your comment..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Post Comment</button>
+                    </form>
+                {% else %}
+                    <div class="alert alert-info mb-4">
+                        <a href="{% url 'login' %}">Login</a> to post comments.
+                    </div>
+                {% endif %}
+                
+                <!-- Comments List -->
+                <div class="comment-section">
+                    {% for comment in comments %}
+                        <div class="comment mb-3 p-3 border rounded">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <strong>{{ comment.creator.username }}</strong>
+                                <small class="text-muted">{{ comment.created_date|timesince }} ago</small>
+                            </div>
+                            <p class="mb-2">{{ comment.content }}</p>
+                            
+                            {% if user.is_authenticated %}
+                                <button class="btn btn-sm btn-outline-secondary reply-btn" data-comment-id="{{ comment.id }}">
+                                    Reply
+                                </button>
+                            {% endif %}
+                            
+                            <!-- Reply Form (hidden by default) -->
+                            <div class="reply-form mt-2" id="reply-form-{{ comment.id }}" style="display: none;">
+                                <form class="reply-form-actual">
+                                    <div class="mb-2">
+                                        <textarea class="form-control" rows="2" placeholder="Write your reply..."></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-sm btn-primary">Reply</button>
+                                    <button type="button" class="btn btn-sm btn-secondary cancel-reply">Cancel</button>
+                                </form>
+                            </div>
+                            
+                            <!-- Replies -->
+                            {% for reply in comment.replies.all %}
+                                <div class="reply ms-4 mt-2 p-2 bg-light rounded">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <strong>{{ reply.creator.username }}</strong>
+                                        <small class="text-muted">{{ reply.created_date|timesince }} ago</small>
+                                    </div>
+                                    <p class="mb-0">{{ reply.content }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% empty %}
+                        <div class="text-center text-muted py-4">
+                            No comments yet. Be the first to comment!
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://kit.fontawesome.com/your-fontawesome-kit.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Bookmark functionality
+    const bookmarkBtn = document.getElementById('bookmark-btn');
+    if (bookmarkBtn) {
+        bookmarkBtn.addEventListener('click', function() {
+            const slug = this.dataset.slug;
+            fetch(`/comic/${slug}/bookmark/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'added') {
+                    this.innerHTML = '<i class="fas fa-heart"></i> Remove Bookmark';
+                    this.classList.remove('btn-outline-danger');
+                    this.classList.add('btn-danger');
+                } else {
+                    this.innerHTML = '<i class="far fa-heart"></i> Add Bookmark';
+                    this.classList.remove('btn-danger');
+                    this.classList.add('btn-outline-danger');
+                }
+            });
+        });
+    }
+    
+    // Rating functionality
+    const ratingStars = document.querySelectorAll('.rating-star');
+    ratingStars.forEach(star => {
+        star.addEventListener('click', function() {
+            const rating = this.dataset.rating;
+            const slug = '{{ comic.slug }}';
+            
+            fetch(`/comic/${slug}/rate/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `rating=${rating}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'rated') {
+                    // Update star display
+                    ratingStars.forEach((s, index) => {
+                        if (index < rating) {
+                            s.style.color = '#ffc107';
+                        } else {
+                            s.style.color = '#e9ecef';
+                        }
+                    });
+                }
+            });
+        });
+        
+        // Hover effect
+        star.addEventListener('mouseenter', function() {
+            const rating = this.dataset.rating;
+            ratingStars.forEach((s, index) => {
+                if (index < rating) {
+                    s.style.color = '#ffc107';
+                } else {
+                    s.style.color = '#e9ecef';
+                }
+            });
+        });
+    });
+    
+    // Comment functionality
+    const commentForm = document.getElementById('comment-form');
+    if (commentForm) {
+        commentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const content = document.getElementById('comment-content').value;
+            const slug = '{{ comic.slug }}';
+            
+            fetch(`/comic/${slug}/comment/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `content=${encodeURIComponent(content)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'comment_added') {
+                    location.reload(); // Reload to show new comment
+                }
+            });
+        });
+    }
+    
+    // Reply functionality
+    document.querySelectorAll('.reply-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const commentId = this.dataset.commentId;
+            const replyForm = document.getElementById(`reply-form-${commentId}`);
+            replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
+        });
+    });
+    
+    document.querySelectorAll('.cancel-reply').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.closest('.reply-form').style.display = 'none';
+        });
+    });
+});
+</script>
+{% endblock %}
