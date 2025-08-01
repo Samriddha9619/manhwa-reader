@@ -72,7 +72,7 @@ class Chapter(MyModelBase):
     slug = AutoSlugField(populate_from='chapter_num', editable=True, blank=True)
     price = models.IntegerField(default=0)
     comic = models.ForeignKey(Comic, related_name="chapters", on_delete=models.CASCADE, null=True)
-
+    
     def save(self, *args, **kwargs):
         prefix = "chapter-"
         self.slug = prefix + str(self.chapter_num)
@@ -80,6 +80,21 @@ class Chapter(MyModelBase):
 
     def __str__(self):
         return "Ch.{0} of {1}".format(self.chapter_num, self.comic.title)
+    
+    def get_previous_chapter(self):
+        return Chapter.objects.filter(
+            comic=self.comic,
+            chapter_num__lt=self.chapter_num,
+            active=True
+        ).order_by('-chapter_num').first()
+
+def get_next_chapter(self):
+        return Chapter.objects.filter(
+            comic=self.comic,
+            chapter_num__gt=self.chapter_num,
+            active=True
+        ).order_by('chapter_num').first()
+
 
 
 class ChapterImage(models.Model):

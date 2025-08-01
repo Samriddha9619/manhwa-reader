@@ -1,3 +1,4 @@
+<!-- templates/reader/buy_coins.html -->
 {% extends 'base.html' %}
 
 {% block title %}Buy Coins - Comic Reader{% endblock %}
@@ -6,40 +7,103 @@
 <div class="text-center mb-4">
     <h1>Buy Coins</h1>
     <p class="text-muted">Purchase coins to unlock premium chapters</p>
-    <div class="alert alert-info">
-        <strong>Current Balance:</strong> {{ user.coins }} coins
-    </div>
+    {% if user.is_authenticated %}
+        <div class="alert alert-info">
+            <strong>Current Balance:</strong> {{ user.coins }} coins
+        </div>
+    {% else %}
+        <div class="alert alert-warning">
+            Please <a href="{% url 'login' %}">login</a> to purchase coins.
+        </div>
+    {% endif %}
 </div>
 
 <div class="row justify-content-center">
     {% for product in products %}
         <div class="col-md-4 col-sm-6 mb-4">
-            <div class="card text-center">
-                <div class="card-body">
+            <div class="card text-center h-100">
+                <div class="card-body d-flex flex-column">
                     <div class="display-4 text-primary mb-3">💰</div>
                     <h4 class="card-title">{{ product.name }}</h4>
                     <h2 class="text-success">${{ product.price }}</h2>
-                    <p class="card-text text-muted">Get coins to unlock chapters</p>
-                    <button class="btn btn-success btn-lg" onclick="buyProduct({{ product.id }})">
-                        Buy Now
-                    </button>
+                    <p class="card-text text-muted flex-grow-1">Get coins to unlock premium chapters</p>
+                    {% if user.is_authenticated %}
+                        <button class="btn btn-success btn-lg mt-auto" onclick="buyProduct({{ product.id }})">
+                            Buy Now
+                        </button>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn btn-primary btn-lg mt-auto">
+                            Login to Buy
+                        </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
     {% empty %}
         <div class="col-12">
             <div class="alert alert-warning text-center">
-                No coin packages available at the moment.
+                <h4>No Coin Packages Available</h4>
+                <p>No coin packages are available at the moment. Please check back later.</p>
             </div>
         </div>
     {% endfor %}
 </div>
+
+{% if user.is_authenticated and products %}
+    <div class="row justify-content-center mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">How it works</h5>
+                </div>
+                <div class="card-body">
+                    <ol>
+                        <li>Choose a coin package above</li>
+                        <li>Complete the payment process</li>
+                        <li>Coins will be added to your account instantly</li>
+                        <li>Use coins to unlock premium chapters</li>
+                    </ol>
+                    <div class="alert alert-info mt-3">
+                        <strong>Note:</strong> This is a demo version. Payment integration will be added soon.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
 <script>
 function buyProduct(productId) {
-    alert('Payment integration coming soon! Product ID: ' + productId);
+    // For now, just show a demo message
+    // In production, this would integrate with Stripe or another payment processor
+    if (confirm('This is a demo. In the real app, this would process the payment. Continue with demo purchase?')) {
+        // Demo: Add coins directly (remove this in production)
+        fetch('/demo-add-coins/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                'product_id': productId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Demo purchase successful! Coins added to your account.');
+                location.reload();
+            } else {
+                alert('Demo purchase failed: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Payment integration coming soon! Product ID: ' + productId);
+        });
+    }
 }
 </script>
 {% endblock %}
