@@ -1,4 +1,4 @@
-<!-- templates/reader/chapter_detail.html -->
+<!-- templates/reader/chapter_detail.html 
 {% extends 'base.html' %}
 
 {% block title %}{{ chapter.comic.title }} - Chapter {{ chapter.chapter_num }} - Comic Reader{% endblock %}
@@ -30,7 +30,7 @@
 {% endblock %}
 
 {% block content %}
-<!-- Chapter Navigation -->
+
 <div class="chapter-navigation bg-white shadow-sm py-3 mb-4">
     <div class="container">
         <div class="row align-items-center">
@@ -58,11 +58,11 @@
     </div>
 </div>
 
-<!-- Reading Area -->
+
 <div class="reading-area">
     <div class="container">
         {% if chapter.price > 0 and not user_has_access %}
-            <!-- Locked Chapter -->
+            
             <div class="text-center py-5">
                 <div class="card mx-auto" style="max-width: 400px;">
                     <div class="card-body">
@@ -87,10 +87,10 @@
                 </div>
             </div>
         {% else %}
-            <!-- Chapter Content -->
+           
             <div class="row justify-content-center">
                 <div class="col-lg-8">
-                    <!-- Chapter Images -->
+                    
                     {% for image in chapter_images %}
                         <div class="text-center mb-3">
                             <img src="{{ image.thumbnail.url }}" alt="Chapter {{ chapter.chapter_num }} - Page {{ forloop.counter }}" 
@@ -103,7 +103,7 @@
                         </div>
                     {% endfor %}
                     
-                    <!-- Chapter Navigation -->
+                  
                     <div class="row mt-5">
                         <div class="col-6">
                             {% if chapter.get_previous_chapter %}
@@ -124,7 +124,7 @@
                     </div>
                 </div>
                 
-                <!-- Sidebar -->
+                
                 <div class="col-lg-4">
                     <div class="chapter-info card">
                         <div class="card-body">
@@ -193,3 +193,4 @@ fetch(`/api/chapter/{{ chapter.id }}/view/`, {
 .catch(error => console.log('View count update failed:', error));
 </script>
 {% endblock %}
+-->

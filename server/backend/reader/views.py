@@ -1,12 +1,13 @@
 from django.contrib.auth.forms import UserCreationForm
 from django.urls import reverse_lazy
+from  .forms import CustomUserCreationForm
 from django.views.generic import CreateView
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
 from django.contrib import messages
 from django.db.models import Avg, Q
-from .models import Comic, Category, Chapter, Comment, Rating, Bookmark, Product, Payment, ChapterView, User
+from .models import Comic, Chapter, Comment, Rating, Bookmark, Product, ChapterView, Category,Payment
 from django.views.generic import ListView, DetailView, View
 class ComicListView(ListView):
     model = Comic
@@ -248,14 +249,12 @@ class BuyCoinsView(LoginRequiredMixin, View):
         return render(request, 'reader/buy_coins.html', {'products': products})
     
     def post(self, request):
-        # This is for the demo purchase - remove in production
         import json
         data = json.loads(request.body)
         product_id = data.get('product_id')
         
         try:
             product = Product.objects.get(id=product_id, active=True)
-            # Demo: Add 100 coins for any purchase
             request.user.coins += 100
             request.user.save()
             
@@ -270,9 +269,7 @@ class BuyCoinsView(LoginRequiredMixin, View):
                 'message': 'Product not found'
             })
 
-# Add a demo purchase URL (remove in production)
-# Add this to your urls.py
-path('demo-add-coins/', views.BuyCoinsView.as_view(), name='demo_add_coins'),
+
 
 
 class BuyChapterView(LoginRequiredMixin, View):

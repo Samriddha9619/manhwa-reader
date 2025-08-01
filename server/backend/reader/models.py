@@ -1,66 +1,27 @@
-from argparse import _AttributeHolder
-
-from autoslug import AutoSlugField
-from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.contrib.auth import get_user_model
 from django.utils.text import slugify
-from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 
 
-class User(AbstractUser):
-    avatar = models.ImageField(null=True, blank=True)
-    # coin = models.OneToOneField('Coin', on_delete=models.CASCADE, null=True)
-    coins = models.IntegerField(default=0)
+User = get_user_model()
 
-
+# Custom base model (assumed structure)
 class MyModelBase(models.Model):
-    created_date = models.DateTimeField(auto_now_add=True)
-    updated_date = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     active = models.BooleanField(default=True)
 
     class Meta:
         abstract = True
 
-        
-class Category(MyModelBase):
-    name = models.CharField(max_length=100, unique=True)
-
-    def __str__(self):
-        return self.name
-    
-
 class Comic(MyModelBase):
-
-    class Meta:
-        ordering = ["-id"]
-
-    title = models.CharField(max_length=100, null=False)
-    description = models.TextField(null=True, blank=True)
-    slug = AutoSlugField(unique=True, populate_from='title', editable=True, blank=True)
-    thumbnail = models.ImageField(blank=True)
-    author = models.TextField(null=True, blank=True, default="None")
-    # bookmark
-    posted_by = models.ForeignKey(User, default=User, on_delete=models.SET_NULL, null=True)
-    categories = models.ManyToManyField('Category', related_name="comics", blank=True)
-
-    def save(self, *args, **kwargs):
-        self.slug = slugify(self.title)
-        super(Comic, self).save(*args, **kwargs)
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    # Add other fields as needed
 
     def __str__(self):
         return self.title
-
-
-def default_chapter_num():
-    try:
-        lastest_chapter = Chapter.objects.latest('id')
-    except Chapter.DoesNotExist:
-        lastest_chapter = None
-        return None
-
-    next_lastest_chapter_num = lastest_chapter.chapter_num + 1
-    return next_lastest_chapter_num
-
 
 class Chapter(MyModelBase):
     class Meta:
@@ -68,19 +29,26 @@ class Chapter(MyModelBase):
         ordering = ["-id"]
 
     title = models.TextField(null=True, blank=True, default="None")
-    chapter_num = models.PositiveIntegerField(null=False, default=default_chapter_num)
-    slug = AutoSlugField(populate_from='chapter_num', editable=True, blank=True)
+    chapter_num = models.PositiveIntegerField(null=False)
+    slug = models.SlugField(blank=True, null=True)
     price = models.IntegerField(default=0)
     comic = models.ForeignKey(Comic, related_name="chapters", on_delete=models.CASCADE, null=True)
-    
+
     def save(self, *args, **kwargs):
-        prefix = "chapter-"
-        self.slug = prefix + str(self.chapter_num)
-        super(Chapter, self).save(*args, **kwargs)
+        # Auto increment if not set
+        if not self.chapter_num:
+            last_chapter = Chapter.objects.filter(comic=self.comic).order_by('chapter_num').last()
+            self.chapter_num = 1 if not last_chapter else last_chapter.chapter_num + 1
+
+        # Auto slug
+        if not self.slug:
+            self.slug = f"chapter-{self.chapter_num}"
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return "Ch.{0} of {1}".format(self.chapter_num, self.comic.title)
-    
+        return f"Ch.{self.chapter_num} of {self.comic.title}"
+
     def get_previous_chapter(self):
         return Chapter.objects.filter(
             comic=self.comic,
@@ -88,13 +56,12 @@ class Chapter(MyModelBase):
             active=True
         ).order_by('-chapter_num').first()
 
-def get_next_chapter(self):
+    def get_next_chapter(self):
         return Chapter.objects.filter(
             comic=self.comic,
             chapter_num__gt=self.chapter_num,
             active=True
         ).order_by('chapter_num').first()
-
 
 
 class ChapterImage(models.Model):
@@ -107,8 +74,13 @@ class ChapterView(models.Model):
     updated_date = models.DateTimeField(auto_now=True)
     views = models.IntegerField(default=0)
     chapter = models.OneToOneField(Chapter, on_delete=models.CASCADE, null=True)
-    # comic = models.OneToOneField(Comic, on_delete=models.CASCADE, null=True)
 
+class Category(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
 
 class Comment(models.Model):
     content = models.TextField()
@@ -144,11 +116,10 @@ class Product(models.Model):
 
     stripe_product_id = models.CharField(max_length=50, null=True, editable=False)
     stripe_price_id = models.CharField(max_length=50, null=True, editable=False)
-    name = models.CharField(max_length=100, null=False)
+    name = models.CharField(max_length=100)
     price = models.DecimalField(max_digits=6, decimal_places=2)
     active = models.BooleanField(default=True)
-    # thumbnail = models.ImageField(default='default.png', blank=True, upload_to='products/%Y/%m')
-    created_at = models.DateTimeField(auto_now=False, auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     category = models.CharField(
         max_length=2,
         choices=TYPES.choices,
@@ -156,27 +127,19 @@ class Product(models.Model):
     )
 
     def __str__(self):
-        return "{0} - {1}".format(self.category, self.price)
-
-
+        return f"{self.category} - {self.price}"
 class Payment(models.Model):
-
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    stripe_charge_id = models.CharField(max_length=255, blank=True, null=True)
-    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True)
-    chapter = models.ForeignKey(Chapter, on_delete=models.SET_NULL, null=True, blank=True)
-    category = models.CharField(
-        max_length=2,
-        choices=Product.TYPES.choices,
-        default=Product.TYPES.COIN
-    )
-    amount = models.FloatField()
-    is_complete = models.BooleanField(default=False, null=True, blank=False)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    product = models.ForeignKey('Product', on_delete=models.SET_NULL, null=True)
+    amount = models.DecimalField(max_digits=8, decimal_places=2)
+    status = models.CharField(max_length=20, choices=(
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    ), default='pending')
+    payment_id = models.CharField(max_length=100, unique=True)  # e.g., from Stripe
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return "Payment of {0} - buy {1} - paid for {2} - is_complete: {3}".format(self.user, self.category, self.amount, self.is_complete)
+        return f"{self.user.username} - {self.status} - {self.amount}"
 
-
-# class Coin(models.Model):
-    # amount = models.IntegerField(default=0, null=True, blank=True)

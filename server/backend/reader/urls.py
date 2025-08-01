@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 app_name = 'reader'
@@ -21,7 +21,8 @@ urlpatterns = [
     path('comic/<slug:slug>/rate/', views.RateComicView.as_view(), name='rate_comic'),
     path('comic/<slug:slug>/comment/', views.AddCommentView.as_view(), name='add_comment'),
     path('comment/<int:pk>/reply/', views.ReplyCommentView.as_view(), name='reply_comment'),
-    
+    path('demo-add-coins/', views.BuyCoinsView.as_view(), name='demo_add_coins'),
+
     path('products/', views.ProductListView.as_view(), name='products'),
     path('buy-coins/', views.BuyCoinsView.as_view(), name='buy_coins'),
     path('buy-chapter/<int:chapter_id>/', views.BuyChapterView.as_view(), name='buy_chapter'),
