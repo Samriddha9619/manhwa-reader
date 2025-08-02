@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block title %}Bookmarks - Comic Reader{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4 text-center">📌 Your Bookmarked Comics</h2>
+    
+    <div class="row">
+        {% for bookmark in object_list %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    {% if bookmark.comic.thumbnail %}
+                        <img src="{{ bookmark.comic.thumbnail.url }}" class="card-img-top" alt="{{ bookmark.comic.title }}">
+                    {% else %}
+                        <div class="bg-light text-center p-4">No Image</div>
+                    {% endif %}
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ bookmark.comic.title }}</h5>
+                        <p class="card-text text-muted">{{ bookmark.comic.description|truncatewords:12 }}</p>
+                        <a href="{% url 'reader:comic_detail' bookmark.comic.slug %}" class="btn btn-outline-primary mt-auto">
+                            Read Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    You haven't bookmarked any comics yet. <a href="{% url 'reader:comic_list' %}">Browse comics</a> to get started!
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

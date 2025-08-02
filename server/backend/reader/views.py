@@ -297,7 +297,7 @@ class LatestComicsView(ListView):
     paginate_by = 12
 
     def get_queryset(self):
-        return Comic.objects.filter(active=True).order_by('-created_date')  
+        return Comic.objects.filter(active=True).order_by('-created_at')  
 
 
 class PopularComicsView(ListView):
@@ -308,7 +308,7 @@ class PopularComicsView(ListView):
 
     def get_queryset(self):
         return Comic.objects.filter(active=True).annotate(
-            avg_rating=Avg('rating_set__rate')  # Fix: use rating_set__rate
+            avg_rating=Avg('rating__rate')  # Fix: use rating_set__rate
         ).order_by('-avg_rating')
 class ChapterViewUpdateView(LoginRequiredMixin, View):
     def post(self, request, pk):

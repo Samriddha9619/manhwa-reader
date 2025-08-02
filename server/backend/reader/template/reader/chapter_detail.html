@@ -1,4 +1,4 @@
-<!-- templates/reader/chapter_detail.html 
+<!-- templates/reader/chapter_detail.html -->
 {% extends 'base.html' %}
 
 {% block title %}{{ chapter.comic.title }} - Chapter {{ chapter.chapter_num }} - Comic Reader{% endblock %}
@@ -193,4 +193,3 @@ fetch(`/api/chapter/{{ chapter.id }}/view/`, {
 .catch(error => console.log('View count update failed:', error));
 </script>
 {% endblock %}
--->

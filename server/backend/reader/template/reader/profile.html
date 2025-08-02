@@ -34,8 +34,8 @@
                 </div>
                 
                 <div class="mt-3">
-                    <a href="{% url 'comics:buy_coins' %}" class="btn btn-success btn-sm">Buy Coins</a>
-                    <a href="{% url 'comics:bookmarks' %}" class="btn btn-outline-primary btn-sm">View Bookmarks</a>
+                    <a href="{% url 'reader:buy_coins' %}" class="btn btn-success btn-sm">Buy Coins</a>
+                    <a href="{% url 'reader:bookmarks' %}" class="btn btn-outline-primary btn-sm">View Bookmarks</a>
                 </div>
             </div>
         </div>
@@ -61,7 +61,7 @@
                                 <div class="card-body p-2">
                                     <h6 class="card-title">{{ bookmark.comic.title }}</h6>
                                     <p class="card-text small text-muted">{{ bookmark.comic.description|truncatewords:8 }}</p>
-                                    <a href="{% url 'comics:comic_detail' bookmark.comic.slug %}" class="btn btn-sm btn-primary">Read</a>
+                                    <a href="{% url 'reader:comic_detail' bookmark.comic.slug %}" class="btn btn-sm btn-primary">Read</a>
                                 </div>
                             </div>
                         </div>
@@ -70,7 +70,7 @@
             {% empty %}
                 <div class="col-12">
                     <div class="alert alert-info">
-                        You haven't bookmarked any comics yet. <a href="{% url 'comics:comic_list' %}">Browse comics</a> to get started!
+                        You haven't bookmarked any comics yet. <a href="{% url 'reader:comic_list' %}">Browse comics</a> to get started!
                     </div>
                 </div>
             {% endfor %}
