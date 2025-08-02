@@ -25,7 +25,7 @@
                 <div class="card-body">
                     <h5 class="card-title">{{ comic.title }}</h5>
                     <p class="card-text text-muted small">{{ comic.description|truncatewords:15 }}</p>
-                    <a href="{% url 'comics:comic_detail' comic.slug %}" class="btn btn-primary btn-sm">Read Now</a>
+                    <a href="{% url 'reader:comic_detail' comic.slug %}" class="btn btn-primary btn-sm">Read Now</a>
                 </div>
             </div>
         </div>

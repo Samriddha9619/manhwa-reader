@@ -59,7 +59,7 @@
                 <!-- Categories -->
                 <div class="mb-3">
                     {% for category in comic.categories.all %}
-                        <a href="{% url 'comics:category_detail' category.pk %}" class="badge bg-secondary text-decoration-none me-1">
+                        <a href="{% url 'reader:category_detail' category.pk %}" class="badge bg-secondary text-decoration-none me-1">
                             {{ category.name }}
                         </a>
                     {% endfor %}
