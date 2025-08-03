@@ -2,7 +2,8 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn your_project_name.wsgi:application --bind 0.0.0.0:$PORT"
+startCommand = "gunicorn backend.wsgi:application --bind 0.0.0.0:$PORT"
 
-[build.nixpacksConfig]
-buildCommand = "pip install -r requirements.txt"
+[variables]
+DJANGO_SETTINGS_MODULE = "backend.settings"
+PYTHONPATH = "/app"
