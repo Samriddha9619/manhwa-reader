@@ -1,14 +1,17 @@
 [phases.setup]
-nixPkgs = ["python310", "python310Packages.pip", "postgresql"]
+nixPkgs = ["python310", "python310Packages.pip", "python310Packages.virtualenv", "postgresql"]
 
 [phases.install]
-cmds = ["cd server && pip install -r requirements.txt"]
+cmds = [
+    "cd server && python -m venv /opt/venv",
+    "cd server && /opt/venv/bin/pip install -r requirements.txt"
+]
 
 [phases.build]
 cmds = [
-    "cd server && python manage.py collectstatic --noinput",
-    "cd server && python manage.py migrate --noinput"
+    "cd server && /opt/venv/bin/python manage.py collectstatic --noinput",
+    "cd server && /opt/venv/bin/python manage.py migrate --noinput"
 ]
 
 [start]
-cmd = "cd server && gunicorn backend.wsgi:application --bind 0.0.0.0:$PORT"
+cmd = "cd server && /opt/venv/bin/gunicorn backend.wsgi:application --bind 0.0.0.0:$PORT"
