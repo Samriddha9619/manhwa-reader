@@ -20,7 +20,7 @@ class ComicListView(ListView):
     template_name = 'reader/comic_list.html'
     context_object_name = 'comics'
     paginate_by = 12
-    
+    ordering = ['-created_at']  
     def get_queryset(self):
         return Comic.objects.filter(active=True)
 
