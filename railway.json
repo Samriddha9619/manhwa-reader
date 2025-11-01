@@ -5,7 +5,8 @@
   },
   "deploy": {
     "numReplicas": 1,
-    "restartPolicyType": "on-failure",
-    "restartPolicyMaxRetries": 10
+    "sleepApplication": false,
+    "healthcheckPath": "/",
+    "healthcheckTimeout": 100
   }
 }
