@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Upload Chapter Images - {{ comic.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Upload Chapter Images for {{ comic.title }}</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="chapter_num" class="form-label">Chapter Number*</label>
+                            <input type="number" class="form-control" id="chapter_num" name="chapter_num" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="chapter_title" class="form-label">Chapter Title (Optional)</label>
+                            <input type="text" class="form-control" id="chapter_title" name="chapter_title">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="images" class="form-label">Chapter Images*</label>
+                            <input type="file" class="form-control" id="images" name="images" accept="image/*" multiple required>
+                            <div class="form-text">Select all images for this chapter in order. Use Ctrl+Click to select multiple files.</div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <strong>📌 Tip:</strong> Name your files like "001.jpg", "002.jpg" so they upload in correct order when you select them all at once.
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                📤 Upload All Images
+                            </button>
+                            <a href="{% url 'reader:comic_detail' comic.slug %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

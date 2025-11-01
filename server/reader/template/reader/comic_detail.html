@@ -76,19 +76,19 @@
                             {% endif %}
                         </button>
                         
-                        <!-- Rating Form -->
-                        <div class="card">
-                            <div class="card-header">Rate this Comic</div>
-                            <div class="card-body">
-                                <div class="rating-input text-center">
-                                    {% for i in "12345"|make_list %}
-                                        <i class="fas fa-star rating-star" data-rating="{{ forloop.counter }}" 
-                                           {% if user_rating and forloop.counter <= user_rating.rate %}style="color: #ffc107;"{% else %}style="color: #e9ecef;"{% endif %}></i>
-                                    {% endfor %}
-                                </div>
-                                <input type="hidden" id="current-rating" value="{% if user_rating %}{{ user_rating.rate }}{% else %}0{% endif %}">
-                            </div>
-                        </div>
+                        
+<div class="card">
+    <div class="card-header">Rate this Comic</div>
+    <div class="card-body">
+        <div class="rating-input text-center">
+            {% for i in "12345" %}
+                <i class="fas fa-star rating-star" data-rating="{{ forloop.counter }}" 
+                   style="cursor: pointer; font-size: 2rem; {% if user_rating and forloop.counter <= user_rating.rate %}color: #ffc107;{% else %}color: #e9ecef;{% endif %}"></i>
+            {% endfor %}
+        </div>
+        <input type="hidden" id="current-rating" value="{% if user_rating %}{{ user_rating.rate }}{% else %}0{% endif %}">
+    </div>
+</div>
                     </div>
                 {% else %}
                     <div class="alert alert-info">
@@ -122,7 +122,7 @@
                     <div class="d-flex justify-content-between align-items-center border-bottom py-2">
                         <div>
                             <h6 class="mb-0">
-                                <a href="{% url 'comics:chapter_detail' comic.slug chapter.slug %}" class="text-decoration-none">
+                                <a href="{% url 'reader:chapter_detail' comic.slug chapter.slug %}" class="text-decoration-none">
                                     Chapter {{ chapter.chapter_num }}
                                     {% if chapter.title and chapter.title != "None" %}
                                         - {{ chapter.title }}
@@ -147,14 +147,12 @@
             </div>
         </div>
         
-        <!-- Comments Section -->
         <div class="card">
             <div class="card-header">
                 <h4>Comments ({{ comments.count }})</h4>
             </div>
             <div class="card-body">
-                <!-- Add Comment Form -->
-                {% if user.is_authenticated %}
+             {% if user.is_authenticated %}
                     <form id="comment-form" class="mb-4">
                         <div class="mb-3">
                             <textarea class="form-control" id="comment-content" rows="3" placeholder="Write your comment..."></textarea>
@@ -167,7 +165,6 @@
                     </div>
                 {% endif %}
                 
-                <!-- Comments List -->
                 <div class="comment-section">
                     {% for comment in comments %}
                         <div class="comment mb-3 p-3 border rounded">
@@ -183,7 +180,6 @@
                                 </button>
                             {% endif %}
                             
-                            <!-- Reply Form (hidden by default) -->
                             <div class="reply-form mt-2" id="reply-form-{{ comment.id }}" style="display: none;">
                                 <form class="reply-form-actual">
                                     <div class="mb-2">
@@ -194,7 +190,6 @@
                                 </form>
                             </div>
                             
-                            <!-- Replies -->
                             {% for reply in comment.replies.all %}
                                 <div class="reply ms-4 mt-2 p-2 bg-light rounded">
                                     <div class="d-flex justify-content-between align-items-start mb-1">
@@ -221,7 +216,7 @@
 <script src="https://kit.fontawesome.com/your-fontawesome-kit.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Bookmark functionality
+    const csrfToken='{{ csrf_token }}';
     const bookmarkBtn = document.getElementById('bookmark-btn');
     if (bookmarkBtn) {
         bookmarkBtn.addEventListener('click', function() {
@@ -248,9 +243,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Rating functionality
     const ratingStars = document.querySelectorAll('.rating-star');
+    const currentRating = parseInt(document.getElementById('current-rating').value) || 0;
+    
+    function updateStars(rating) {
+        ratingStars.forEach((s, index) => {
+            if (index < rating) {
+                s.style.color = '#ffc107';
+            } else {
+                s.style.color = '#e9ecef';
+            }
+        });
+    }
+    
+    updateStars(currentRating);
+    
     ratingStars.forEach(star => {
+        star.style.cursor = 'pointer';
+        star.style.fontSize = '1.5rem';
+        
         star.addEventListener('click', function() {
             const rating = this.dataset.rating;
             const slug = '{{ comic.slug }}';
@@ -266,32 +277,31 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'rated') {
-                    // Update star display
-                    ratingStars.forEach((s, index) => {
-                        if (index < rating) {
-                            s.style.color = '#ffc107';
-                        } else {
-                            s.style.color = '#e9ecef';
-                        }
-                    });
+                    alert('Rating submitted: ' + rating + '/5');
+                    updateStars(rating);
+                    document.getElementById('current-rating').value = rating;
+                    setTimeout(() => location.reload(), 500);
                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to submit rating. Please try again.');
             });
         });
         
-        // Hover effect
         star.addEventListener('mouseenter', function() {
             const rating = this.dataset.rating;
-            ratingStars.forEach((s, index) => {
-                if (index < rating) {
-                    s.style.color = '#ffc107';
-                } else {
-                    s.style.color = '#e9ecef';
-                }
-            });
+            updateStars(rating);
         });
     });
     
-    // Comment functionality
+    const ratingContainer = document.querySelector('.rating-input');
+    if (ratingContainer) {
+        ratingContainer.addEventListener('mouseleave', function() {
+            updateStars(currentRating);
+        });
+    }
+    
     const commentForm = document.getElementById('comment-form');
     if (commentForm) {
         commentForm.addEventListener('submit', function(e) {
@@ -310,13 +320,12 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'comment_added') {
-                    location.reload(); // Reload to show new comment
+                    location.reload(); 
                 }
             });
         });
     }
     
-    // Reply functionality
     document.querySelectorAll('.reply-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const commentId = this.dataset.commentId;

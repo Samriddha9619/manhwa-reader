@@ -76,3 +76,12 @@ body {
         margin-bottom: 10px;
     }
 }
+
+.chapter-image {
+    max-width: 100% !important;
+    height: auto !important;
+    display: block !important;
+    margin: 0 auto !important;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+}

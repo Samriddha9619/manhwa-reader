@@ -1,20 +1,24 @@
-<!-- templates/reader/chapter_detail.html -->
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ chapter.comic.title }} - Chapter {{ chapter.chapter_num }} - Comic Reader{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/custom.css' %}">
 <style>
 .chapter-image {
-    max-width: 100%;
-    height: auto;
-    margin-bottom: 10px;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
+    max-width: 800px !important;
+    width: 100% !important;
+    height: auto !important;
+    display: block !important;
+    margin: 20px auto !important;
+    border: 2px solid #dee2e6 !important;
+    border-radius: 8px !important;
+    background: white !important;
 }
 .chapter-navigation {
     position: sticky;
-    top: 80px;
+    top: 0;
     z-index: 100;
 }
 .reading-area {
@@ -78,7 +82,7 @@
                                 </button>
                             {% else %}
                                 <p class="text-danger">Insufficient coins!</p>
-                                <a href="{% url 'comics:buy_coins' %}" class="btn btn-success">Buy More Coins</a>
+                                <a href="{% url 'reader:buy_coins' %}" class="btn btn-success">Buy More Coins</a>
                             {% endif %}
                         {% else %}
                             <a href="{% url 'login' %}" class="btn btn-primary">Login to Purchase</a>
@@ -90,16 +94,20 @@
            
             <div class="row justify-content-center">
                 <div class="col-lg-8">
+                    <h3 class="text-center mb-4 text-white bg-dark py-2 rounded">Chapter {{ chapter.chapter_num }}</h3>
                     
                     {% for image in chapter_images %}
-                        <div class="text-center mb-3">
-                            <img src="{{ image.thumbnail.url }}" alt="Chapter {{ chapter.chapter_num }} - Page {{ forloop.counter }}" 
-                                 class="chapter-image" loading="lazy">
+                        <div class="text-center mb-4 p-3 bg-white rounded">
+                            <img src="{{ image.image.url }}" 
+                                 alt="Chapter {{ chapter.chapter_num }} - Page {{ image.page_number }}" 
+                                 class="chapter-image">
+                            <p class="text-muted mt-2 mb-0"><strong>Page {{ image.page_number }}</strong></p>
                         </div>
                     {% empty %}
-                        <div class="alert alert-info text-center">
+                        <div class="alert alert-warning text-center">
                             <h4>No images available</h4>
                             <p>This chapter doesn't have any images yet.</p>
+                            <p class="text-muted">DEBUG: chapter_images = {{ chapter_images }}</p>
                         </div>
                     {% endfor %}
                     
@@ -107,16 +115,16 @@
                     <div class="row mt-5">
                         <div class="col-6">
                             {% if chapter.get_previous_chapter %}
-                                <a href="{% url 'comics:chapter_detail' chapter.comic.slug chapter.get_previous_chapter.slug %}" 
-                                   class="btn btn-outline-primary">
+                                <a href="{% url 'reader:chapter_detail' chapter.comic.slug chapter.get_previous_chapter.slug %}" 
+                                   class="btn btn-outline-primary btn-lg w-100">
                                     ← Previous Chapter
                                 </a>
                             {% endif %}
                         </div>
                         <div class="col-6 text-end">
                             {% if chapter.get_next_chapter %}
-                                <a href="{% url 'comics:chapter_detail' chapter.comic.slug chapter.get_next_chapter.slug %}" 
-                                   class="btn btn-primary">
+                                <a href="{% url 'reader:chapter_detail' chapter.comic.slug chapter.get_next_chapter.slug %}" 
+                                   class="btn btn-primary btn-lg w-100">
                                     Next Chapter →
                                 </a>
                             {% endif %}
@@ -126,7 +134,7 @@
                 
                 
                 <div class="col-lg-4">
-                    <div class="chapter-info card">
+                    <div class="chapter-info card sticky-top" style="top: 100px;">
                         <div class="card-body">
                             <h5>{{ chapter.comic.title }}</h5>
                             <p class="text-muted">Chapter {{ chapter.chapter_num }}</p>
@@ -135,9 +143,9 @@
                             
                             <h6>Other Chapters</h6>
                             <div style="max-height: 300px; overflow-y: auto;">
-                                {% for ch in comic.chapters.all %}
+                                {% for ch in chapter.comic.chapters.all %}
                                     <div class="d-flex justify-content-between align-items-center py-1 {% if ch.id == chapter.id %}bg-light rounded{% endif %}">
-                                        <a href="{% url 'comics:chapter_detail' comic.slug ch.slug %}" 
+                                        <a href="{% url 'reader:chapter_detail' chapter.comic.slug ch.slug %}" 
                                            class="text-decoration-none {% if ch.id == chapter.id %}fw-bold{% endif %}">
                                             Ch. {{ ch.chapter_num }}
                                         </a>
@@ -158,6 +166,8 @@
 
 {% block extra_js %}
 <script>
+const csrfToken = '{{ csrf_token }}';
+
 function purchaseChapter(chapterId) {
     if (confirm('Are you sure you want to purchase this chapter?')) {
         fetch(`/buy-chapter/${chapterId}/`, {
@@ -183,7 +193,6 @@ function purchaseChapter(chapterId) {
     }
 }
 
-// Update chapter view count
 fetch(`/api/chapter/{{ chapter.id }}/view/`, {
     method: 'POST',
     headers: {

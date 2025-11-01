@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils.text import slugify
 from django.conf import settings
+from cloudinary.models import CloudinaryField
 
 
 User = get_user_model()
@@ -17,8 +18,27 @@ class MyModelBase(models.Model):
 
 class Comic(MyModelBase):
     title = models.CharField(max_length=255)
+    slug = models.SlugField(unique=True, blank=True)
     description = models.TextField(blank=True)
-    # Add other fields as needed
+    author = models.CharField(max_length=255, blank=True, null=True)
+    artist = models.CharField(max_length=255, blank=True, null=True)
+    status = models.CharField(max_length=50, choices=[
+        ('ongoing', 'Ongoing'),
+        ('completed', 'Completed'),
+        ('hiatus', 'Hiatus'),
+    ], default='ongoing')
+    
+    # Cloudinary image fields
+    cover_image = CloudinaryField('image', blank=True, null=True, folder='manhwa/covers/')
+    thumbnail = CloudinaryField('image', blank=True, null=True, folder='manhwa/thumbnails/')
+    
+    # Categories relationship
+    categories = models.ManyToManyField('Category', related_name='comics', blank=True)
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
@@ -65,8 +85,16 @@ class Chapter(MyModelBase):
 
 
 class ChapterImage(models.Model):
-    thumbnail = models.ImageField(blank=True)
-    chapter = models.ForeignKey(Chapter, related_name="chapter_images", on_delete=models.CASCADE, null=True, editable=False)
+    image = CloudinaryField('image', folder='manhwa/chapters/')
+    page_number = models.PositiveIntegerField(default=1)
+    chapter = models.ForeignKey(Chapter, related_name="chapter_images", on_delete=models.CASCADE, null=True)
+    
+    class Meta:
+        ordering = ['page_number']
+        unique_together = ('chapter', 'page_number')
+    
+    def __str__(self):
+        return f"Page {self.page_number} of {self.chapter}"
 
 
 class ChapterView(models.Model):

@@ -22,13 +22,14 @@ urlpatterns = [
     path('comic/<slug:slug>/comment/', views.AddCommentView.as_view(), name='add_comment'),
     path('comment/<int:pk>/reply/', views.ReplyCommentView.as_view(), name='reply_comment'),
     path('demo-add-coins/', views.BuyCoinsView.as_view(), name='demo_add_coins'),
-
+    
     path('products/', views.ProductListView.as_view(), name='products'),
     path('buy-coins/', views.BuyCoinsView.as_view(), name='buy_coins'),
     path('buy-chapter/<int:chapter_id>/', views.BuyChapterView.as_view(), name='buy_chapter'),
     path('payment/success/', views.PaymentSuccessView.as_view(), name='payment_success'),
     path('payment/cancel/', views.PaymentCancelView.as_view(), name='payment_cancel'),
-    
+    path('comic/<slug:comic_slug>/upload-images/', views.UploadChapterImagesView.as_view(), name='upload_chapter_images'),
+
     
     path('search/', views.ComicSearchView.as_view(), name='comic_search'),
     path('latest/', views.LatestComicsView.as_view(), name='latest_comics'),
