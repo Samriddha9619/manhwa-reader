@@ -7,7 +7,6 @@ from cloudinary.models import CloudinaryField
 
 User = get_user_model()
 
-# Custom base model (assumed structure)
 class MyModelBase(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -28,11 +27,9 @@ class Comic(MyModelBase):
         ('hiatus', 'Hiatus'),
     ], default='ongoing')
     
-    # Cloudinary image fields
     cover_image = CloudinaryField('image', blank=True, null=True, folder='manhwa/covers/')
     thumbnail = CloudinaryField('image', blank=True, null=True, folder='manhwa/thumbnails/')
     
-    # Categories relationship
     categories = models.ManyToManyField('Category', related_name='comics', blank=True)
     
     def save(self, *args, **kwargs):
@@ -55,12 +52,10 @@ class Chapter(MyModelBase):
     comic = models.ForeignKey(Comic, related_name="chapters", on_delete=models.CASCADE, null=True)
 
     def save(self, *args, **kwargs):
-        # Auto increment if not set
         if not self.chapter_num:
             last_chapter = Chapter.objects.filter(comic=self.comic).order_by('chapter_num').last()
             self.chapter_num = 1 if not last_chapter else last_chapter.chapter_num + 1
 
-        # Auto slug
         if not self.slug:
             self.slug = f"chapter-{self.chapter_num}"
 
@@ -165,7 +160,7 @@ class Payment(models.Model):
         ('completed', 'Completed'),
         ('failed', 'Failed'),
     ), default='pending')
-    payment_id = models.CharField(max_length=100, unique=True)  # e.g., from Stripe
+    payment_id = models.CharField(max_length=100, unique=True)  
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

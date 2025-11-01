@@ -35,6 +35,7 @@ class SignUpView(CreateView):
 
 class ComicDetailView(DetailView):
     model = Comic
+    ordering = ['-created_at']
     template_name = 'reader/comic_detail.html'
     context_object_name = 'comic'
     
