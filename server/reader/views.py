@@ -22,7 +22,7 @@ class ComicListView(ListView):
     paginate_by = 12
     ordering = ['-created_at']  
     def get_queryset(self):
-        return Comic.objects.filter(active=True)
+        return Comic.objects.filter(active=True).order_by('-created_at')
 
 class SignUpView(CreateView):
     form_class = CustomUserCreationForm
