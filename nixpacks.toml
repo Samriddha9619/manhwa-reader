@@ -7,11 +7,5 @@ cmds = [
     "cd server && /opt/venv/bin/pip install -r requirements.txt"
 ]
 
-[phases.build]
-cmds = [
-    "cd server && /opt/venv/bin/python manage.py collectstatic --noinput",
-    "cd server && /opt/venv/bin/python manage.py migrate --noinput"
-]
-
 [start]
-cmd = "cd server && /opt/venv/bin/gunicorn backend.wsgi:application --bind 0.0.0.0:$PORT"
+cmd = "cd server && /opt/venv/bin/python manage.py migrate --noinput && /opt/venv/bin/gunicorn backend.wsgi:application --bind 0.0.0.0:${PORT:-8080} --workers 2 --timeout 120 --access-logfile - --error-logfile -"
